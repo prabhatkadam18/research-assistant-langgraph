@@ -29,13 +29,11 @@ class ResearchState(TypedDict):
 class SubQuestions(BaseModel):
     questions: list[str] = Field(description="3 to 5 focused research sub-questions")
     
-@traceable
 def planner(state: ResearchState) -> dict:
     prompt = f"Break this research topic into 3-5 focused sub-questions:\n\n{state['topic']}"
     result = llm.with_structured_output(SubQuestions).invoke(prompt)
     return {"sub_questions": result.questions}
 
-@traceable
 def search_agent(state: ResearchState) -> dict:
     collected = []
     for q in state["sub_questions"]:
@@ -46,6 +44,10 @@ def search_agent(state: ResearchState) -> dict:
         "search_results": collected,			# This is appended because of the add operator in the ResearchState type
         "iterations": state["iterations"] + 1	# This is replaced because of the default behavior replacing in state
 	}
+
+# NOTICE: how we have not added any @traceable decorator to any
+# functions above. LangSmith still trace these. That is because of
+# LANGSMITH_TRACING=true in env variables
 
 
 # we create the graph here, creating the nodes and edges for the flow
